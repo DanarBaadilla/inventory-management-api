@@ -50,8 +50,9 @@ Authorization: Bearer <token>
 ## 📄 Dokumentasi Swagger
 
 Akses dokumentasi di:
-👉 **http://localhost:3000/swagger/index.html** (jika sudah di install di local)
-👉 **https://inventory-management-api-production-27e1.up.railway.app/swagger/index.html**  (Deployed on railway)
+- 👉 **http://localhost:3000/swagger/index.html** (jika sudah di install di local)
+
+- 👉 **https://inventory-management-api-production-27e1.up.railway.app/swagger/index.html**  (Deployed on railway)
 
 -----
 
