@@ -1,0 +1,963 @@
+basePath: /
+definitions:
+  web.CategoryCreateOrUpdateRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  web.CategoryResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  web.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  web.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/web.UserResponse'
+    type: object
+  web.ProductCreateOrUpdateRequest:
+    properties:
+      category_id:
+        type: integer
+      name:
+        type: string
+      stock:
+        minimum: 0
+        type: integer
+    required:
+    - category_id
+    - name
+    type: object
+  web.ProductResponse:
+    properties:
+      category_id:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      stock:
+        type: integer
+    type: object
+  web.StockMovementCreateRequest:
+    properties:
+      note:
+        type: string
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+      type:
+        enum:
+        - in
+        - out
+        type: string
+    required:
+    - product_id
+    - quantity
+    - type
+    type: object
+  web.StockMovementResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      product:
+        type: string
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+      type:
+        type: string
+      user:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  web.UserCreateOrUpdateRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      role:
+        enum:
+        - admin
+        - staff
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - role
+    type: object
+  web.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      role:
+        type: string
+    type: object
+  web.WebResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error: {}
+      status:
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: danarbaadilla12@gmail.com
+    name: Danar Rafiardi
+  description: RESTful API untuk mengelola inventaris (kategori, produk, stok, dan
+    user).
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://example.com/terms/
+  title: Inventory Management API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentikasi user berdasarkan email dan password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      summary: Login untuk mendapatkan token JWT
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      description: Endpoint ini membutuhkan token JWT yang valid
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.UserResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan informasi user yang sedang login
+      tags:
+      - Auth
+  /categories:
+    get:
+      description: Mengambil semua data kategori yang tersedia
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.CategoryResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan semua kategori
+      tags:
+      - Categories
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan kategori baru ke dalam sistem
+      parameters:
+      - description: Data kategori baru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.CategoryCreateOrUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.CategoryResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Membuat kategori baru
+      tags:
+      - Categories
+  /categories/{id}:
+    delete:
+      description: Menghapus kategori berdasarkan ID
+      parameters:
+      - description: ID Kategori
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Menghapus kategori
+      tags:
+      - Categories
+    get:
+      description: Mengambil detail kategori berdasarkan ID yang diberikan
+      parameters:
+      - description: ID Kategori
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.CategoryResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan kategori berdasarkan ID
+      tags:
+      - Categories
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data kategori berdasarkan ID
+      parameters:
+      - description: ID Kategori
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data kategori yang diperbarui
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.CategoryCreateOrUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.CategoryResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Memperbarui kategori
+      tags:
+      - Categories
+  /products:
+    get:
+      description: Mengambil seluruh data produk pada database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.ProductResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan Seluruh Produk
+      tags:
+      - Product
+    post:
+      consumes:
+      - application/json
+      description: Membuat produk baru (hanya bisa oleh admin)
+      parameters:
+      - description: Product Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.ProductCreateOrUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.ProductResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Membuat Produk baru
+      tags:
+      - Product
+  /products/{id}:
+    delete:
+      description: Endpoint ini digunakan untuk menghapus produk berdasarkan ID.
+      parameters:
+      - description: ID Produk yang akan dihapus
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus produk
+      tags:
+      - Product
+    get:
+      description: Mencari produk berdasarkan ID produk
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.ProductResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan produk berdasarkan ID
+      tags:
+      - Product
+    put:
+      consumes:
+      - application/json
+      description: Endpoint ini digunakan untuk memperbarui informasi produk berdasarkan
+        ID.
+      parameters:
+      - description: ID Produk yang akan diperbarui
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data produk terbaru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.ProductCreateOrUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.ProductResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Perbarui data produk
+      tags:
+      - Product
+  /products/search:
+    get:
+      description: Endpoint ini digunakan untuk mencari produk berdasarkan kata kunci,
+        menyortir berdasarkan stok, dan menampilkan hasil dengan paginasi.
+      parameters:
+      - description: Kata kunci pencarian (nama produk)
+        in: query
+        name: q
+        type: string
+      - description: 'Urutkan berdasarkan stok: asc atau desc'
+        in: query
+        name: sort
+        type: string
+      - description: 'Nomor halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Jumlah item per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.ProductResponse'
+                  type: array
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Cari, filter, dan paginasi produk
+      tags:
+      - Product
+  /reports/stock-movements:
+    get:
+      description: Mengambil laporan pergerakan stok berdasarkan bulan, bisa difilter
+        berdasarkan user, produk, atau tipe, dan bisa diekspor ke CSV.
+      parameters:
+      - description: 'Format bulan: YYYY-MM (contoh: 2024-06)'
+        in: query
+        name: month
+        type: string
+      - description: Filter berdasarkan ID user
+        in: query
+        name: user_id
+        type: integer
+      - description: Filter berdasarkan ID produk
+        in: query
+        name: product_id
+        type: integer
+      - description: Jenis pergerakan (in atau out)
+        in: query
+        name: type
+        type: string
+      - description: Jika bernilai 'csv', maka file akan didownload dalam format CSV
+        in: query
+        name: export
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.StockMovementResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Ambil laporan stok bulanan
+      tags:
+      - StockMovement
+  /stock-movements:
+    get:
+      description: Endpoint ini digunakan untuk mengambil seluruh data pergerakan
+        stok (masuk & keluar).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.StockMovementResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Ambil semua data pergerakan stok
+      tags:
+      - StockMovement
+    post:
+      consumes:
+      - application/json
+      description: Endpoint ini digunakan untuk menambah pergerakan stok masuk atau
+        keluar.
+      parameters:
+      - description: Data pergerakan stok
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.StockMovementCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.StockMovementResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Tambah data pergerakan stok baru
+      tags:
+      - StockMovement
+  /stock-movements/{id}:
+    delete:
+      description: Endpoint ini digunakan untuk menghapus pergerakan stok berdasarkan
+        ID.
+      parameters:
+      - description: ID pergerakan stok
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus data pergerakan stok
+      tags:
+      - StockMovement
+    get:
+      description: Endpoint ini mengambil satu data pergerakan stok berdasarkan ID-nya.
+      parameters:
+      - description: ID pergerakan stok
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.StockMovementResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Ambil data pergerakan stok berdasarkan ID
+      tags:
+      - StockMovement
+  /users:
+    get:
+      description: Endpoint ini digunakan untuk mengambil semua user yang terdaftar
+        dalam sistem.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.UserResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Ambil semua data user
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      description: Endpoint ini digunakan untuk menambahkan user baru ke sistem.
+      parameters:
+      - description: Data user baru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.UserCreateOrUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Tambah user baru
+      tags:
+      - User
+  /users/{id}:
+    delete:
+      description: Endpoint ini digunakan untuk menghapus user dari sistem berdasarkan
+        ID-nya.
+      parameters:
+      - description: ID user yang ingin dihapus
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus user berdasarkan ID
+      tags:
+      - User
+    get:
+      description: Endpoint ini digunakan untuk mendapatkan data user berdasarkan
+        ID.
+      parameters:
+      - description: ID user yang ingin diambil
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Ambil user berdasarkan ID
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      description: Endpoint ini digunakan untuk memperbarui informasi user berdasarkan
+        ID.
+      parameters:
+      - description: ID user yang akan diperbarui
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data user terbaru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.UserCreateOrUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Perbarui data user
+      tags:
+      - User
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
